@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shoko Proxy Maker</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Sora:wght@500;700;800&display=swap');
+
+  :root {
+    --ink: #0f172a;
+    --surface: #ffffff;
+    --surface-soft: #f7f9fc;
+    --surface-pop: #eaf1ff;
+    --line: #dbe4f0;
+    --text: #162033;
+    --muted: #5e6a83;
+    --brand: #2f6df6;
+    --brand-strong: #1550d8;
+    --brand-soft: #dce9ff;
+    --danger: #d64545;
+    --card-w: 63mm;
+    --card-h: 88mm;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background:
+      radial-gradient(circle at 0% 0%, #f4f8ff 0%, transparent 45%),
+      radial-gradient(circle at 100% 0%, #eef4ff 0%, transparent 40%),
+      linear-gradient(180deg, #f8fbff 0%, #f3f7fd 100%);
+    color: var(--text);
+    font-family: 'Manrope', 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: rgba(255,255,255,0.92);
+    border-bottom: 1px solid var(--line);
+    backdrop-filter: blur(8px);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  .logo h1 {
+    font-family: 'Sora', 'Manrope', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--ink);
+    letter-spacing: 0.5px;
+  }
+
+  .logo span {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.8px;
+    font-family: 'Manrope', sans-serif;
+    text-transform: uppercase;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn {
+    font-family: 'Manrope', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    padding: 9px 20px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: all 0.2s;
+    font-weight: 700;
+  }
+
+  .btn-primary {
+    background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+    color: #fff;
+  }
+  .btn-primary:hover {
+    background: linear-gradient(135deg, #3f7bff, var(--brand));
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px rgba(47,109,246,0.35);
+  }
+
+  .btn-ghost {
+    background: var(--surface);
+    color: var(--muted);
+    border: 1px solid var(--line);
+  }
+  .btn-ghost:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+    background: var(--surface-pop);
+  }
+
+  .btn-danger {
+    background: #fff;
+    color: var(--danger);
+    border: 1px solid #f1c5c5;
+    font-size: 10px;
+    padding: 6px 14px;
+  }
+  .btn-danger:hover {
+    background: #fff5f5;
+    border-color: var(--danger);
+  }
+
+  /* ─── LAYOUT ─── */
+  .main {
+    display: flex;
+    flex: 1;
+    height: calc(100vh - 65px);
+  }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: 260px;
+    background: rgba(255,255,255,0.85);
+    border-right: 1px solid var(--line);
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    flex-shrink: 0;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 20px;
+  }
+
+  .sidebar-label {
+    font-family: 'Sora', sans-serif;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    color: var(--brand-strong);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .sidebar-label::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 12px;
+    background: var(--brand);
+  }
+
+  .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #edf2fa;
+  }
+
+  .info-row .label { color: var(--muted); font-size: 12px; }
+  .info-row .value { color: var(--text); font-weight: 300; }
+
+  .counter-display {
+    text-align: center;
+    padding: 12px;
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
+    margin-top: 8px;
+    border-radius: 12px;
+  }
+
+  .counter-display .big { font-size: 40px; color: var(--brand-strong); font-family: 'Sora', sans-serif; line-height: 1; }
+  .counter-display .small { font-size: 10px; color: var(--muted); letter-spacing: 1px; margin-top: 4px; }
+
+  .tip-box {
+    background: var(--surface-soft);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--brand);
+    padding: 10px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .fit-controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .fit-btn {
+    flex: 1;
+    background: #fff;
+    border: 1px solid var(--line);
+    color: var(--muted);
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fit-btn:hover {
+    border-color: var(--brand);
+    color: var(--brand);
+  }
+
+  .fit-btn.active {
+    border-color: var(--brand);
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+
+  .proxy-select,
+  .cut-toggle {
+    width: 100%;
+    border: 1px solid var(--line);
+    background: #fff;
+    color: var(--text);
+    border-radius: 10px;
+    padding: 10px;
+    font-size: 13px;
+    font-family: 'Manrope', sans-serif;
+  }
+
+  .cut-guides {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .page-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .page-badge {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  /* ─── CARD GRID AREA ─── */
+  .canvas-area {
+    flex: 1;
+    overflow: auto;
+    background: #ecf2fb;
+    background-image: 
+      repeating-linear-gradient(0deg, transparent, transparent 39px, #dce6f5 39px, #dce6f5 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, #dce6f5 39px, #dce6f5 40px);
+    display: flex;
+    justify-content: center;
+    padding: 40px;
+  }
+
+  /* ─── PAGE PREVIEW ─── */
+  .page-preview {
+    /* A4 at 96dpi: 794 × 1123px */
+    width: 794px;
+    min-height: 1123px;
+    background: #fff;
+    box-shadow: 0 24px 60px rgba(16,39,84,0.2), 0 0 0 1px #d9e3f2;
+    padding: 15mm;
+    display: grid;
+    grid-template-columns: repeat(3, var(--card-w));
+    grid-template-rows: repeat(5, var(--card-h));   /* 14 cards max on A4 landscape or portrait trick */
+    gap: 2mm;
+    align-content: start;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+
+  .page-title {
+    position: absolute;
+    top: -24px;
+    left: 0;
+    font-family: 'Sora', sans-serif;
+    font-size: 11px;
+    letter-spacing: 1px;
+    color: #7c8aa6;
+    text-transform: uppercase;
+  }
+
+  /* ─── CARD SLOT ─── */
+  .card-slot {
+    width: var(--card-w);
+    height: var(--card-h);
+    border: 1.5px dashed #c5d4eb;
+    background: #f8fbff;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    flex-shrink: 0;
+  }
+
+  .card-slot:hover { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(47,109,246,0.2); }
+  .card-slot.drag-over { border-color: #4a9eff; background: #e8f4ff; box-shadow: 0 0 0 3px rgba(74,158,255,0.4); }
+  .card-slot.filled { border: none; }
+
+  .slot-placeholder {
+    text-align: center;
+    pointer-events: none;
+  }
+  .slot-placeholder .plus {
+    font-size: 28px;
+    color: #bbb;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .slot-placeholder .hint {
+    font-size: 9px;
+    color: #97a4bd;
+    letter-spacing: 1px;
+    font-family: 'Sora', sans-serif;
+    text-transform: uppercase;
+  }
+
+  .card-img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: block;
+    pointer-events: none;
+  }
+
+  .card-img.fit-width {
+    width: 100%;
+    height: auto;
+  }
+
+  .card-img.fit-height {
+    width: auto;
+    height: 100%;
+  }
+
+  .card-remove {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    background: rgba(15,23,42,0.8);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    z-index: 10;
+  }
+
+  .card-slot:hover .card-remove { display: flex; }
+
+  /* ─── HIDDEN FILE INPUT ─── */
+  #file-input { display: none; }
+
+  /* ─── SLOT NUMBER ─── */
+  .slot-num {
+    position: absolute;
+    top: 3px;
+    left: 4px;
+    font-size: 9px;
+    color: #9aa8c3;
+    font-family: 'Sora', sans-serif;
+    pointer-events: none;
+  }
+  .filled .slot-num { display: none; }
+
+  /* ─── STATUS BAR ─── */
+  .status-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(255,255,255,0.95);
+    border-top: 1px solid var(--line);
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 11px;
+    color: var(--muted);
+    z-index: 100;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--brand);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .status-bar .sep { color: #333; }
+
+  /* ─── MODAL ─── */
+  .modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-bg.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 28px;
+    max-width: 420px;
+    width: 90%;
+    text-align: center;
+  }
+
+  .modal h2 {
+    font-family: 'Sora', sans-serif;
+    color: var(--brand-strong);
+    font-size: 16px;
+    letter-spacing: 3px;
+    margin-bottom: 14px;
+  }
+
+  .modal p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-bottom: 20px; }
+
+  .paste-area {
+    border: 2px dashed var(--line);
+    background: #f7faff;
+    padding: 28px;
+    margin-bottom: 20px;
+    cursor: default;
+    color: var(--muted);
+    font-size: 13px;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .paste-area:focus { border-color: var(--brand); outline: none; }
+  .paste-area .paste-icon { font-size: 30px; }
+
+  .modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+  /* ─── SCROLLBAR ─── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: #0a0a0a; }
+  ::-webkit-scrollbar-thumb { background: #c1d0e7; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--brand); }
+
+  /* ─── EXPORT LOADING ─── */
+  .export-loading {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    z-index: 300;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+    font-family: 'Cinzel', serif;
+    color: var(--brand);
+    letter-spacing: 3px;
+    font-size: 13px;
+  }
+  .export-loading.open { display: flex; }
+  .spinner {
+    width: 40px; height: 40px;
+    border: 2px solid #cfddf5;
+    border-top-color: var(--brand);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── ORNAMENT ─── */
+  .ornament {
+    text-align: center;
+    color: var(--brand);
+    font-size: 14px;
+    opacity: 0.4;
+    letter-spacing: 8px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <h1>Shoko Proxy Maker</h1>
+    <span>Print-ready card sheets</span>
+  </div>
+  <div class="header-actions">
+    <button class="btn btn-ghost" onclick="clearAll()">Clear All</button>
+    <button class="btn btn-primary" onclick="exportPDF()">⬇ Export PDF</button>
+  </div>
+</header>
+
+<div class="main">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Proxy Type</div>
+      <select class="proxy-select" id="proxy-type" onchange="setProxyType(this.value)">
+        <option value="standard">Pokemon / MTG (63 x 88 mm)</option>
+        <option value="creditcard">Credit Card Portrait (53.98 x 85.6 mm)</option>
+        <option value="yugioh">Yu-Gi-Oh! (59 x 86 mm)</option>
+        <option value="japanese">Cardfight / JP Standard (62 x 89 mm)</option>
+        <option value="mini">Mini Euro (44 x 68 mm)</option>
+      </select>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Card Specs</div>
+      <div class="info-row"><span class="label">Width</span><span class="value" id="spec-width">2.48 in / 63 mm</span></div>
+      <div class="info-row"><span class="label">Height</span><span class="value" id="spec-height">3.46 in / 88 mm</span></div>
+      <div class="info-row"><span class="label">Page</span><span class="value" id="spec-page">A4 Portrait</span></div>
+      <div class="info-row"><span class="label">Layout</span><span class="value" id="spec-layout">3 x 3 grid</span></div>
+      <div class="info-row"><span class="label">Cards/Page</span><span class="value" id="spec-cards">9 max</span></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Image Fit</div>
+      <div class="fit-controls">
+        <button class="fit-btn active" id="fit-width-btn" onclick="setResizeMode('fit-width')">Fit Width</button>
+        <button class="fit-btn" id="fit-height-btn" onclick="setResizeMode('fit-height')">Fit Height</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Progress</div>
+      <div class="counter-display">
+        <div class="big" id="filled-count">0</div>
+        <div class="small" id="filled-label">of 9 slots filled</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Print Guides</div>
+      <select class="cut-toggle" id="cut-guides-toggle">
+        <option value="extended">Full-page cut lines (easier cutting)</option>
+        <option value="on">Card border guides only</option>
+        <option value="off">No cut guide lines in PDF</option>
+      </select>
+      <div class="cut-guides">
+        1. Trim the outer border first.<br>
+        2. Cut each card on the thin gray guide lines.<br>
+        3. Use a ruler and craft knife for cleaner edges.
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Pages</div>
+      <div class="page-controls">
+        <button class="btn btn-ghost" onclick="prevPage()">Prev Page</button>
+        <button class="btn btn-ghost" onclick="nextPage()">Next Page</button>
+        <button class="btn btn-ghost" onclick="addPage()">Add Page</button>
+        <button class="btn btn-danger" onclick="removePage()">Remove Page</button>
+      </div>
+      <div class="page-badge" id="page-badge">Page 1 of 1</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">How to Use</div>
+      <div class="tip-box">
+        Click any empty slot to upload an image, or drag &amp; drop an image file directly onto a slot.<br><br>
+        You can also use <strong>Ctrl+V</strong> / <strong>Cmd+V</strong> to paste an image from your clipboard into the selected slot.<br><br>
+        Hover over a filled card to remove it with the ✕ button.
+      </div>
+    </div>
+
+    <div class="ornament">· · · · ·</div>
+
+    <div>
+      <div class="sidebar-label">Export</div>
+      <button class="btn btn-primary" style="width:100%; padding:12px;" onclick="exportPDF()">Export Print-Ready PDF</button>
+      <p style="font-size:11px; color:var(--muted); margin-top:8px; text-align:center;">A4 · 300 DPI equivalent layout</p>
+    </div>
+  </aside>
+
+  <!-- CARD GRID -->
+  <div class="canvas-area">
+    <div class="page-preview" id="page-preview">
+      <!-- Cards injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- STATUS BAR -->
+<div class="status-bar">
+  <div class="status-dot"></div>
+  <span>Ready</span>
+  <span class="sep">|</span>
+  <span>Click a slot or drag an image to add a card</span>
+  <span class="sep">|</span>
+  <span id="status-msg">0 / 14 cards</span>
+</div>
+
+<!-- FILE INPUT -->
+<input type="file" id="file-input" accept="image/*" onchange="handleFileSelect(event)">
+
+<!-- PASTE MODAL -->
+<div class="modal-bg" id="paste-modal">
+  <div class="modal">
+    <h2>Add Card Image</h2>
+    <p>Paste an image from your clipboard, or choose a file from your device.</p>
+    <div class="paste-area" id="paste-area" tabindex="0" title="Click here then press Ctrl+V / Cmd+V to paste">
+      <div class="paste-icon">📋</div>
+      <div>Click here, then press <strong>Ctrl+V</strong> / <strong>Cmd+V</strong></div>
+      <div style="font-size:11px; margin-top:4px;">to paste from clipboard</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="triggerFileInput()">Choose File</button>
+      <button class="btn btn-danger" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT LOADING -->
+<div class="export-loading" id="export-loading">
+  <div class="spinner"></div>
+  <span>GENERATING PDF</span>
+</div>
+
+<script>
+const TOTAL_SLOTS = 14;
+const PROXY_TYPES = {
+  standard: { label: 'Pokemon / MTG', width: 63, height: 88, cols: 3, rows: 3 },
+  creditcard: { label: 'Credit Card Portrait', width: 53.98, height: 85.6, cols: 3, rows: 3 },
+  yugioh: { label: 'Yu-Gi-Oh!', width: 59, height: 86, cols: 3, rows: 3 },
+  japanese: { label: 'Cardfight / JP Standard', width: 62, height: 89, cols: 3, rows: 3 },
+  mini: { label: 'Mini Euro', width: 44, height: 68, cols: 4, rows: 4 }
+};
+
+let currentProxyType = 'standard';
+let currentConfig = PROXY_TYPES[currentProxyType];
+let slotsPerPage = currentConfig.cols * currentConfig.rows;
+let pageCount = 1;
+let currentPage = 0;
+let totalSlots = slotsPerPage * pageCount;
+let cards = new Array(totalSlots).fill(null); // stores data URLs for all pages
+let activeSlot = null;
+let resizeMode = 'fit-width';
+
+// ── BUILD GRID ──────────────────────────────────────────────
+function buildGrid() {
+  const preview = document.getElementById('page-preview');
+  const cfg = currentConfig;
+  preview.style.gridTemplateColumns = `repeat(${cfg.cols}, var(--card-w))`;
+  preview.style.gridTemplateRows = `repeat(${cfg.rows}, var(--card-h))`;
+  preview.innerHTML = '<div class="page-title">Page ' + (currentPage + 1) + '</div>';
+  const offset = currentPage * slotsPerPage;
+
+  for (let i = 0; i < slotsPerPage; i++) {
+    const cardIndex = offset + i;
+    const slot = document.createElement('div');
+    slot.className = 'card-slot' + (cards[cardIndex] ? ' filled' : '');
+    slot.dataset.index = cardIndex;
+    slot.innerHTML = `<span class="slot-num">${i + 1}</span>`;
+
+    if (cards[cardIndex]) {
+      const img = document.createElement('img');
+      img.className = `card-img ${resizeMode}`;
+      img.src = cards[cardIndex];
+      slot.appendChild(img);
+      const rm = document.createElement('button');
+      rm.className = 'card-remove';
+      rm.innerHTML = '✕';
+      rm.title = 'Remove card';
+      rm.onclick = (e) => { e.stopPropagation(); removeCard(cardIndex); };
+      slot.appendChild(rm);
+    } else {
+      slot.innerHTML += `
+        <div class="slot-placeholder">
+          <div class="plus">+</div>
+          <div class="hint">Add Image</div>
+        </div>`;
+    }
+
+    slot.addEventListener('click', () => openSlot(cardIndex));
+    slot.addEventListener('dragover', (e) => { e.preventDefault(); slot.classList.add('drag-over'); });
+    slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+    slot.addEventListener('drop', (e) => { e.preventDefault(); slot.classList.remove('drag-over'); handleDrop(e, cardIndex); });
+    preview.appendChild(slot);
+  }
+
+  document.getElementById('page-badge').textContent = `Page ${currentPage + 1} of ${pageCount}`;
+  updateCount();
+}
+
+// ── SLOT INTERACTIONS ────────────────────────────────────────
+function openSlot(index) {
+  if (cards[index]) return; // already filled
+  activeSlot = index;
+  openModal();
+}
+
+function removeCard(index) {
+  cards[index] = null;
+  buildGrid();
+}
+
+function clearAll() {
+  if (!confirm('Clear all cards?')) return;
+  cards.fill(null);
+  buildGrid();
+}
+
+function mmToIn(mm) {
+  return (mm / 25.4).toFixed(2);
+}
+
+function setProxyType(typeKey) {
+  if (!PROXY_TYPES[typeKey]) return;
+  const oldCards = cards.slice();
+
+  currentProxyType = typeKey;
+  currentConfig = PROXY_TYPES[typeKey];
+  slotsPerPage = currentConfig.cols * currentConfig.rows;
+  totalSlots = slotsPerPage * pageCount;
+
+  cards = new Array(totalSlots).fill(null);
+  for (let i = 0; i < Math.min(totalSlots, oldCards.length); i++) {
+    cards[i] = oldCards[i];
+  }
+
+  if (activeSlot !== null && activeSlot >= totalSlots) activeSlot = null;
+  if (currentPage >= pageCount) currentPage = pageCount - 1;
+
+  document.documentElement.style.setProperty('--card-w', `${currentConfig.width}mm`);
+  document.documentElement.style.setProperty('--card-h', `${currentConfig.height}mm`);
+
+  document.getElementById('spec-width').textContent = `${mmToIn(currentConfig.width)} in / ${currentConfig.width} mm`;
+  document.getElementById('spec-height').textContent = `${mmToIn(currentConfig.height)} in / ${currentConfig.height} mm`;
+  document.getElementById('spec-page').textContent = 'A4 Portrait';
+  document.getElementById('spec-layout').textContent = `${currentConfig.cols} x ${currentConfig.rows} grid`;
+  document.getElementById('spec-cards').textContent = `${slotsPerPage} / page`;
+  document.getElementById('filled-label').textContent = `of ${totalSlots} slots filled`;
+
+  buildGrid();
+}
+
+function addPage() {
+  if (pageCount >= 20) return;
+  pageCount += 1;
+  currentPage = pageCount - 1;
+  totalSlots = slotsPerPage * pageCount;
+  cards = cards.concat(new Array(slotsPerPage).fill(null));
+  document.getElementById('filled-label').textContent = `of ${totalSlots} slots filled`;
+  buildGrid();
+}
+
+function removePage() {
+  if (pageCount <= 1) return;
+
+  const start = (pageCount - 1) * slotsPerPage;
+  const lastPageHasCards = cards.slice(start).some(Boolean);
+  if (lastPageHasCards && !confirm('Last page has cards. Remove it anyway?')) return;
+
+  cards = cards.slice(0, start);
+  pageCount -= 1;
+  if (currentPage >= pageCount) currentPage = pageCount - 1;
+  totalSlots = slotsPerPage * pageCount;
+  document.getElementById('filled-label').textContent = `of ${totalSlots} slots filled`;
+  buildGrid();
+}
+
+function nextPage() {
+  if (currentPage >= pageCount - 1) return;
+  currentPage += 1;
+  buildGrid();
+}
+
+function prevPage() {
+  if (currentPage <= 0) return;
+  currentPage -= 1;
+  buildGrid();
+}
+
+function setResizeMode(mode) {
+  if (mode !== 'fit-width' && mode !== 'fit-height') return;
+  resizeMode = mode;
+  document.getElementById('fit-width-btn').classList.toggle('active', mode === 'fit-width');
+  document.getElementById('fit-height-btn').classList.toggle('active', mode === 'fit-height');
+  buildGrid();
+}
+
+// ── MODAL ────────────────────────────────────────────────────
+function openModal() {
+  document.getElementById('paste-modal').classList.add('open');
+  setTimeout(() => document.getElementById('paste-area').focus(), 100);
+}
+
+function closeModal() {
+  document.getElementById('paste-modal').classList.remove('open');
+  activeSlot = null;
+}
+
+// Click backdrop to close
+document.getElementById('paste-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ── PASTE ────────────────────────────────────────────────────
+document.getElementById('paste-area').addEventListener('paste', (e) => {
+  const items = e.clipboardData.items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const file = item.getAsFile();
+      readImageFile(file);
+      closeModal();
+      break;
+    }
+  }
+});
+
+// Global paste (when modal not open, paste into next empty slot)
+document.addEventListener('paste', (e) => {
+  if (document.getElementById('paste-modal').classList.contains('open')) return;
+  const items = e.clipboardData.items;
+  for (const item of items) {
+    if (item.type.startsWith('image/')) {
+      const idx = cards.findIndex(c => c === null);
+      if (idx !== -1) {
+        activeSlot = idx;
+        readImageFile(item.getAsFile());
+      }
+      break;
+    }
+  }
+});
+
+// ── FILE INPUT ────────────────────────────────────────────────
+function triggerFileInput() {
+  document.getElementById('file-input').click();
+}
+
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) readImageFile(file);
+  e.target.value = '';
+  closeModal();
+}
+
+// ── DRAG & DROP (onto slots) ──────────────────────────────────
+function handleDrop(e, index) {
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    activeSlot = index;
+    readImageFile(file);
+  }
+}
+
+// ── READ IMAGE ────────────────────────────────────────────────
+function readImageFile(file, slotIndex = activeSlot) {
+  if (slotIndex === null || slotIndex < 0 || slotIndex >= totalSlots) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    cards[slotIndex] = e.target.result;
+    if (activeSlot === slotIndex) activeSlot = null;
+    buildGrid();
+  };
+  reader.readAsDataURL(file);
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image.'));
+    img.src = src;
+  });
+}
+
+async function prepareImageForCard(dataUrl, mode, cardW, cardH) {
+  const scale = 12;
+  const canvas = document.createElement('canvas');
+  canvas.width = Math.round(cardW * scale);
+  canvas.height = Math.round(cardH * scale);
+
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  const img = await loadImage(dataUrl);
+  const imgAspect = img.width / img.height;
+
+  let drawW;
+  let drawH;
+
+  if (mode === 'fit-height') {
+    drawH = canvas.height;
+    drawW = drawH * imgAspect;
+  } else {
+    drawW = canvas.width;
+    drawH = drawW / imgAspect;
+  }
+
+  const dx = (canvas.width - drawW) / 2;
+  const dy = (canvas.height - drawH) / 2;
+  ctx.drawImage(img, dx, dy, drawW, drawH);
+
+  return canvas.toDataURL('image/jpeg', 0.95);
+}
+
+function drawExtendedCutGuides(pdf, pageW, pageH, marginX, marginY, cardW, cardH, cols, rows, gap) {
+  // Draw lines on exact card edges (left/right and top/bottom), not in the gap center.
+  const xCuts = [];
+  const yCuts = [];
+
+  for (let c = 0; c < cols; c++) {
+    const left = marginX + c * (cardW + gap);
+    const right = left + cardW;
+    xCuts.push(left, right);
+  }
+
+  for (let r = 0; r < rows; r++) {
+    const top = marginY + r * (cardH + gap);
+    const bottom = top + cardH;
+    yCuts.push(top, bottom);
+  }
+
+  pdf.setDrawColor(165, 165, 165);
+  pdf.setLineWidth(0.2);
+  [...new Set(xCuts)].forEach((x) => pdf.line(x, 0, x, pageH));
+  [...new Set(yCuts)].forEach((y) => pdf.line(0, y, pageW, y));
+}
+
+// ── COUNT UPDATE ──────────────────────────────────────────────
+function updateCount() {
+  const filled = cards.filter(Boolean).length;
+  document.getElementById('filled-count').textContent = filled;
+  document.getElementById('status-msg').textContent = `${filled} / ${totalSlots} cards`;
+}
+
+// ── PDF EXPORT ────────────────────────────────────────────────
+async function exportPDF() {
+  const filled = cards.filter(Boolean).length;
+  if (filled === 0) {
+    alert('Add at least one card image before exporting.');
+    return;
+  }
+
+  document.getElementById('export-loading').classList.add('open');
+  await new Promise(r => setTimeout(r, 80)); // let UI update
+
+  const { jsPDF } = window.jspdf;
+  // A4: 210 × 297 mm
+  const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const cfg = currentConfig;
+
+  const PAGE_W = 210;
+  const PAGE_H = 297;
+  const CARD_W = cfg.width;
+  const CARD_H = cfg.height;
+  const COLS = cfg.cols;
+  const ROWS = cfg.rows;
+  const GAP = 2;
+  const TOTAL_GRID_W = COLS * CARD_W + (COLS - 1) * GAP;
+  const TOTAL_GRID_H = ROWS * CARD_H + (ROWS - 1) * GAP;
+  const MARGIN_X = (PAGE_W - TOTAL_GRID_W) / 2;
+  const MARGIN_Y = (PAGE_H - TOTAL_GRID_H) / 2;
+
+  for (let page = 0; page < pageCount; page++) {
+    if (page > 0) pdf.addPage();
+
+    const pageOffset = page * slotsPerPage;
+    for (let i = 0; i < slotsPerPage; i++) {
+      const cardIndex = pageOffset + i;
+      if (!cards[cardIndex]) continue;
+      const col = i % COLS;
+      const row = Math.floor(i / COLS);
+      const x = MARGIN_X + col * (CARD_W + GAP);
+      const y = MARGIN_Y + row * (CARD_H + GAP);
+
+      const processedImage = await prepareImageForCard(cards[cardIndex], resizeMode, CARD_W, CARD_H);
+      pdf.addImage(processedImage, 'JPEG', x, y, CARD_W, CARD_H);
+    }
+
+    const guideMode = document.getElementById('cut-guides-toggle').value;
+    if (guideMode === 'extended') {
+      drawExtendedCutGuides(pdf, PAGE_W, PAGE_H, MARGIN_X, MARGIN_Y, CARD_W, CARD_H, COLS, ROWS, GAP);
+    } else if (guideMode === 'on') {
+      pdf.setDrawColor(190, 190, 190);
+      pdf.setLineWidth(0.15);
+      for (let i = 0; i < slotsPerPage; i++) {
+        const col = i % COLS;
+        const row = Math.floor(i / COLS);
+        const x = MARGIN_X + col * (CARD_W + GAP);
+        const y = MARGIN_Y + row * (CARD_H + GAP);
+        pdf.rect(x, y, CARD_W, CARD_H);
+      }
+    }
+  }
+
+  document.getElementById('export-loading').classList.remove('open');
+  pdf.save('tcg-proxies.pdf');
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+buildGrid();
+setProxyType(currentProxyType);
+</script>
+</body>
+</html>
